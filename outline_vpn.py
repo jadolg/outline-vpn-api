@@ -19,66 +19,82 @@ class OutlineVPN:
         self.api_url = api_url
 
     def get_keys(self):
-        response = requests.get(f'{self.api_url}/access-keys/', verify=False)
-        if response.status_code == 200 and 'accessKeys' in response.json():
-            response_metrics = requests.get(f'{self.api_url}/metrics/transfer', verify=False)
-            if response_metrics.status_code >= 400 or 'bytesTransferredByUserId' not in response_metrics.json():
-                raise Exception('Unable to get metrics')
+        response = requests.get(f"{self.api_url}/access-keys/", verify=False)
+        if response.status_code == 200 and "accessKeys" in response.json():
+            response_metrics = requests.get(
+                f"{self.api_url}/metrics/transfer", verify=False
+            )
+            if (
+                response_metrics.status_code >= 400
+                or "bytesTransferredByUserId" not in response_metrics.json()
+            ):
+                raise Exception("Unable to get metrics")
 
             response_json = response.json()
-            for key in response_json.get('accessKeys'):
+            for key in response_json.get("accessKeys"):
                 yield OutlineKey(
-                    id=key.get('id'),
-                    name=key.get('name'),
-                    password=key.get('password'),
-                    port=key.get('port'),
-                    method=key.get('method'),
-                    access_url=key.get('accessUrl'),
-                    used_bytes=response_metrics.json().get('bytesTransferredByUserId').get(key.get('id'))
+                    id=key.get("id"),
+                    name=key.get("name"),
+                    password=key.get("password"),
+                    port=key.get("port"),
+                    method=key.get("method"),
+                    access_url=key.get("accessUrl"),
+                    used_bytes=response_metrics.json()
+                    .get("bytesTransferredByUserId")
+                    .get(key.get("id")),
                 )
         else:
-            raise Exception('Unable to retrieve keys')
+            raise Exception("Unable to retrieve keys")
 
     def create_key(self) -> OutlineKey:
-        response = requests.post(f'{self.api_url}/access-keys/', verify=False)
+        response = requests.post(f"{self.api_url}/access-keys/", verify=False)
         if response.status_code == 201:
             key = response.json()
             return OutlineKey(
-                id=key.get('id'),
-                name=key.get('name'),
-                password=key.get('password'),
-                port=key.get('port'),
-                method=key.get('method'),
-                access_url=key.get('accessUrl'),
-                used_bytes=0
+                id=key.get("id"),
+                name=key.get("name"),
+                password=key.get("password"),
+                port=key.get("port"),
+                method=key.get("method"),
+                access_url=key.get("accessUrl"),
+                used_bytes=0,
             )
         else:
-            raise Exception('Unable to create key')
+            raise Exception("Unable to create key")
 
     def delete_key(self, key_id: int) -> bool:
-        response = requests.delete(f'{self.api_url}/access-keys/{key_id}', verify=False)
+        response = requests.delete(f"{self.api_url}/access-keys/{key_id}", verify=False)
         return response.status_code == 204
 
     def rename_key(self, key_id: int, name: str):
         files = {
-            'name': (None, name),
+            "name": (None, name),
         }
 
-        response = requests.put(f'{self.api_url}/access-keys/{key_id}/name', files=files, verify=False)
+        response = requests.put(
+            f"{self.api_url}/access-keys/{key_id}/name", files=files, verify=False
+        )
         return response.status_code == 204
 
     def add_data_limit(self, key_id: int, limit_bytes: int) -> bool:
         data = {"limit": {"bytes": limit_bytes}}
 
-        response = requests.put(f'{self.api_url}/access-keys/{key_id}/data-limit', json=data, verify=False)
+        response = requests.put(
+            f"{self.api_url}/access-keys/{key_id}/data-limit", json=data, verify=False
+        )
         return response.status_code == 204
 
     def delete_data_limit(self, key_id: int) -> bool:
-        response = requests.delete(f'{self.api_url}/access-keys/{key_id}/data-limit', verify=False)
+        response = requests.delete(
+            f"{self.api_url}/access-keys/{key_id}/data-limit", verify=False
+        )
         return response.status_code == 204
 
     def get_transferred_data(self):
-        response = requests.get(f'{self.api_url}/metrics/transfer', verify=False)
-        if response.status_code >= 400 or 'bytesTransferredByUserId' not in response.json():
-            raise Exception('Unable to get metrics')
+        response = requests.get(f"{self.api_url}/metrics/transfer", verify=False)
+        if (
+            response.status_code >= 400
+            or "bytesTransferredByUserId" not in response.json()
+        ):
+            raise Exception("Unable to get metrics")
         return response.json()
