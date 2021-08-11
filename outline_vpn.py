@@ -1,3 +1,7 @@
+"""
+API wrapper for Outline VPN
+"""
+
 from dataclasses import dataclass
 
 import requests
@@ -5,6 +9,9 @@ import requests
 
 @dataclass
 class OutlineKey:
+    """
+    Describes a key in the Outline server
+    """
     id: int
     name: str
     password: str
@@ -15,10 +22,14 @@ class OutlineKey:
 
 
 class OutlineVPN:
+    """
+    An Outline VPN connection
+    """
     def __init__(self, api_url: str):
         self.api_url = api_url
 
     def get_keys(self):
+        """Get all keys in the outline server"""
         response = requests.get(f"{self.api_url}/access-keys/", verify=False)
         if response.status_code == 200 and "accessKeys" in response.json():
             response_metrics = requests.get(
@@ -47,6 +58,7 @@ class OutlineVPN:
             raise Exception("Unable to retrieve keys")
 
     def create_key(self) -> OutlineKey:
+        """Create a new key"""
         response = requests.post(f"{self.api_url}/access-keys/", verify=False)
         if response.status_code == 201:
             key = response.json()
@@ -63,10 +75,12 @@ class OutlineVPN:
             raise Exception("Unable to create key")
 
     def delete_key(self, key_id: int) -> bool:
+        """Delete a key"""
         response = requests.delete(f"{self.api_url}/access-keys/{key_id}", verify=False)
         return response.status_code == 204
 
     def rename_key(self, key_id: int, name: str):
+        """Rename a key"""
         files = {
             "name": (None, name),
         }
@@ -77,6 +91,7 @@ class OutlineVPN:
         return response.status_code == 204
 
     def add_data_limit(self, key_id: int, limit_bytes: int) -> bool:
+        """Set data limit for a key (in bytes)"""
         data = {"limit": {"bytes": limit_bytes}}
 
         response = requests.put(
@@ -85,12 +100,14 @@ class OutlineVPN:
         return response.status_code == 204
 
     def delete_data_limit(self, key_id: int) -> bool:
+        """Removes data limit for a key"""
         response = requests.delete(
             f"{self.api_url}/access-keys/{key_id}/data-limit", verify=False
         )
         return response.status_code == 204
 
     def get_transferred_data(self):
+        """Gets how much data all keys have used"""
         response = requests.get(f"{self.api_url}/metrics/transfer", verify=False)
         if (
             response.status_code >= 400
