@@ -21,9 +21,7 @@ jobs:
       run: |
         bash -c "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-server/master/src/server_manager/install_scripts/install_server.sh)" > ./outline-install.log
         credentials=$(grep "apiUrl" ./outline-install.log)
-        echo $credentials
         echo "OUTLINE_CREDENTIALS=$credentials" >> $GITHUB_ENV
-        echo $OUTLINE_CREDENTIALS
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
