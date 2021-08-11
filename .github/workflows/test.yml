@@ -18,6 +18,7 @@ jobs:
       with:
         python-version: 3.9
     - name: Install outline
+      shell: bash
       run: |
         bash -c "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-server/master/src/server_manager/install_scripts/install_server.sh)" > ./outline-install.log
         credentials=$(grep "apiUrl" ./outline-install.log )
