@@ -71,8 +71,8 @@ class OutlineVPN:
                 access_url=key.get("accessUrl"),
                 used_bytes=0,
             )
-        else:
-            raise Exception("Unable to create key")
+
+        raise Exception("Unable to create key")
 
     def delete_key(self, key_id: int) -> bool:
         """Delete a key"""
