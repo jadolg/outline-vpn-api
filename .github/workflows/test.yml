@@ -20,7 +20,7 @@ jobs:
     - name: Install outline
       run: |
         bash -c "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-server/master/src/server_manager/install_scripts/install_server.sh)" > ./outline-install.log
-        grep "apiUrl" ./outline-install.log | awk '{ print "'\''"$1"'\''" }'
+        grep "apiUrl" ./outline-install.log | awk '{ print "'\''"$1"'\''" }' | jq
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
