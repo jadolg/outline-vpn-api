@@ -12,7 +12,7 @@ class OutlineKey:
     """
     Describes a key in the Outline server
     """
-    id: int
+    key_id: int
     name: str
     password: str
     port: int
@@ -44,7 +44,7 @@ class OutlineVPN:
             response_json = response.json()
             for key in response_json.get("accessKeys"):
                 yield OutlineKey(
-                    id=key.get("id"),
+                    key_id=key.get("id"),
                     name=key.get("name"),
                     password=key.get("password"),
                     port=key.get("port"),
@@ -63,7 +63,7 @@ class OutlineVPN:
         if response.status_code == 201:
             key = response.json()
             return OutlineKey(
-                id=key.get("id"),
+                key_id=key.get("id"),
                 name=key.get("name"),
                 password=key.get("password"),
                 port=key.get("port"),
