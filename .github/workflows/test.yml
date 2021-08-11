@@ -20,9 +20,9 @@ jobs:
     - name: Install outline
       run: |
         bash -c "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-server/master/src/server_manager/install_scripts/install_server.sh)" > ./outline-install.log
-        credentials=$(grep "apiUrl" ./outline-install.log)
-        echo "'$credentials'"
-        echo "'$credentials'" | jq
+        credentials=$(grep "apiUrl" ./outline-install.log )
+        echo "'$credentials'" | sed 's/\"/\\"/g'
+        echo "'$credentials'" | sed 's/\"/\\"/g' | jq
         echo "OUTLINE_CREDENTIALS=$credentials" >> $GITHUB_ENV
     - name: Install dependencies
       run: |
