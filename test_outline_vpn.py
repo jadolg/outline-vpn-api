@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from outline_vpn import OutlineVPN
+from outline_vpn.outline_vpn import OutlineVPN
 
 
 @pytest.fixture
