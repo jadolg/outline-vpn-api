@@ -13,7 +13,7 @@ from outline_vpn import OutlineVPN
 def client() -> OutlineVPN:
     """This generates a client from the credentials provided in the environment"""
     assert os.getenv("OUTLINE_CREDENTIALS")
-    client = OutlineVPN(api_url=os.getenv("OUTLINE_CREDENTIALS"))   # pylint: disable=W0621
+    client = OutlineVPN(api_url=os.getenv("OUTLINE_CREDENTIALS"))  # pylint: disable=W0621
     yield client
 
 
