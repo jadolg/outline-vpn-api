@@ -1,2 +1,6 @@
 venv/
 .idea/
+/build/
+/outline_vpn_api.egg-info/
+/dist/
+/.pytest_cache/
