@@ -14,7 +14,7 @@ setup(
     author="Jorge Alberto Díaz Orozco (Akiel)",
     author_email="diazorozcoj@gmail.com",
     description="Python API wrapper for Outline VPN",
-    long_description=open("README.md", "r").read(),
+    long_description=open("README.md", "r").read(),  # pylint: disable=R1732
     long_description_content_type="text/markdown",
     install_requires=("requests",),
 )
