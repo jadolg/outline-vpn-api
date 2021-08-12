@@ -12,6 +12,7 @@ class OutlineKey:
     """
     Describes a key in the Outline server
     """
+
     key_id: int
     name: str
     password: str
@@ -25,6 +26,7 @@ class OutlineVPN:
     """
     An Outline VPN connection
     """
+
     def __init__(self, api_url: str):
         self.api_url = api_url
 
@@ -42,18 +44,22 @@ class OutlineVPN:
                 raise Exception("Unable to get metrics")
 
             response_json = response.json()
+            result = []
             for key in response_json.get("accessKeys"):
-                yield OutlineKey(
-                    key_id=key.get("id"),
-                    name=key.get("name"),
-                    password=key.get("password"),
-                    port=key.get("port"),
-                    method=key.get("method"),
-                    access_url=key.get("accessUrl"),
-                    used_bytes=response_metrics.json()
-                    .get("bytesTransferredByUserId")
-                    .get(key.get("id")),
+                result.append(
+                    OutlineKey(
+                        key_id=key.get("id"),
+                        name=key.get("name"),
+                        password=key.get("password"),
+                        port=key.get("port"),
+                        method=key.get("method"),
+                        access_url=key.get("accessUrl"),
+                        used_bytes=response_metrics.json()
+                        .get("bytesTransferredByUserId")
+                        .get(key.get("id")),
+                    )
                 )
+            return result
         else:
             raise Exception("Unable to retrieve keys")
 
