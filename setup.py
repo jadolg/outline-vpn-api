@@ -1,4 +1,5 @@
 # -*-coding:utf-8-*-
+"""setup for outline-vpn-api"""
 
 from setuptools import setup
 
