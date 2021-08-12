@@ -6,9 +6,7 @@ from setuptools import setup
 setup(
     name="outline-vpn-api",
     version="1.0.0",
-    packages=[
-        ".",
-    ],
+    package_dir={"": "."},
     url="https://github.com/jadolg/outline-vpn-api/",
     license="MIT",
     author="Jorge Alberto Díaz Orozco (Akiel)",
