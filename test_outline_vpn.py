@@ -11,6 +11,7 @@ from outline_vpn import OutlineVPN
 
 @pytest.fixture
 def client() -> OutlineVPN:
+    """This generates a client from the credentials provided in the environment"""
     assert os.getenv("OUTLINE_CREDENTIALS")
     client = OutlineVPN(api_url=os.getenv("OUTLINE_CREDENTIALS"))
     yield client
@@ -22,6 +23,7 @@ def test_get_keys(client: OutlineVPN):
 
 
 def test_cud_key(client: OutlineVPN):
+    """Test creating/updating the name/deleting a key"""
     new_key = client.create_key()
     assert new_key is not None
     assert int(new_key.key_id) > 0
@@ -32,5 +34,6 @@ def test_cud_key(client: OutlineVPN):
 
 
 def test_limits(client: OutlineVPN):
+    """Test setting and removing limits"""
     assert client.add_data_limit(0, 1024 * 1024 * 20)
     assert client.delete_data_limit(0)
