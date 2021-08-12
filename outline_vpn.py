@@ -60,8 +60,7 @@ class OutlineVPN:
                     )
                 )
             return result
-        else:
-            raise Exception("Unable to retrieve keys")
+        raise Exception("Unable to retrieve keys")
 
     def create_key(self) -> OutlineKey:
         """Create a new key"""
