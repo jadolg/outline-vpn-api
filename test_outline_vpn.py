@@ -39,3 +39,10 @@ def test_limits(client: OutlineVPN):  # pylint: disable=W0621
     """Test setting and removing limits"""
     assert client.add_data_limit(0, 1024 * 1024 * 20)
     assert client.delete_data_limit(0)
+
+
+def test_get_transferred_data(client: OutlineVPN):
+    """Call the method and assert it responds something"""
+    data = client.get_transferred_data()
+    assert data is not None
+    assert "bytesTransferredByUserId" in data
