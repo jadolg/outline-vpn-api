@@ -6,6 +6,8 @@ from dataclasses import dataclass
 
 import requests
 
+from outline_vpn.utils import check_ssl_fingerprint
+
 
 @dataclass
 class OutlineKey:
@@ -27,8 +29,11 @@ class OutlineVPN:
     An Outline VPN connection
     """
 
-    def __init__(self, api_url: str):
+    def __init__(self, api_url: str, cert_sha256: str = None):
         self.api_url = api_url
+
+        if cert_sha256:
+            check_ssl_fingerprint(api_url, cert_sha256)
 
     def get_keys(self):
         """Get all keys in the outline server"""
