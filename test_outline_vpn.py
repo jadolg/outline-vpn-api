@@ -12,9 +12,11 @@ from outline_vpn.outline_vpn import OutlineVPN
 @pytest.fixture
 def client() -> OutlineVPN:
     """This generates a client from the credentials provided in the environment"""
-    assert os.getenv("OUTLINE_CREDENTIALS")
+    assert os.getenv("OUTLINE_API_URL")
+    assert os.getenv("OUTLINE_CERT_SHA256")
     client = OutlineVPN(
-        api_url=os.getenv("OUTLINE_CREDENTIALS")
+        api_url=os.getenv("OUTLINE_API_URL"),
+        cert_sha256=os.getenv("OUTLINE_CERT_SHA256")
     )  # pylint: disable=W0621
     yield client
 
@@ -39,3 +41,34 @@ def test_limits(client: OutlineVPN):  # pylint: disable=W0621
     """Test setting and removing limits"""
     assert client.add_data_limit(0, 1024 * 1024 * 20)
     assert client.delete_data_limit(0)
+
+
+def test_server_methods(client: OutlineVPN):
+    server_info = client.get_server_information()
+    assert server_info is not None
+    new_server_name = "Test Server name"
+    assert client.set_server_name(new_server_name)
+    new_hostname = "example.com"
+    assert client.set_hostname(new_hostname)
+    new_port_for_access_keys = 11233
+    assert client.set_port_new_for_access_keys(new_port_for_access_keys)
+    updated_server_info = client.get_server_information()
+    assert updated_server_info.get("name") == new_server_name
+    assert updated_server_info.get("hostnameForAccessKeys") == new_hostname
+    assert updated_server_info.get("portForNewAccessKeys") == new_port_for_access_keys
+
+    assert client.set_server_name(server_info.get("name"))
+    assert client.set_hostname(server_info.get("hostnameForAccessKeys"))
+    assert client.set_port_new_for_access_keys(server_info.get("portForNewAccessKeys"))
+
+
+def test_metrics_status(client: OutlineVPN):
+    metrics_status = client.get_metrics_status()
+    assert client.set_metrics_status(not metrics_status)
+    assert client.get_metrics_status() != metrics_status
+    client.set_metrics_status(metrics_status)
+
+
+def test_data_limit_for_all_keys(client: OutlineVPN):
+    assert client.set_data_limit_for_all_keys(1024 * 1024 * 20)
+    assert client.delete_data_limit_for_all_keys()
