@@ -72,3 +72,10 @@ def test_metrics_status(client: OutlineVPN):
 def test_data_limit_for_all_keys(client: OutlineVPN):
     assert client.set_data_limit_for_all_keys(1024 * 1024 * 20)
     assert client.delete_data_limit_for_all_keys()
+    
+    
+def test_get_transferred_data(client: OutlineVPN):
+    """Call the method and assert it responds something"""
+    data = client.get_transferred_data()
+    assert data is not None
+    assert "bytesTransferredByUserId" in data
