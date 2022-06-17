@@ -12,11 +12,14 @@ from outline_vpn.outline_vpn import OutlineVPN
 @pytest.fixture
 def client() -> OutlineVPN:
     """This generates a client from the credentials provided in the environment"""
-    assert os.getenv("OUTLINE_API_URL")
-    assert os.getenv("OUTLINE_CERT_SHA256")
+    install_log = open("outline-install.log", "r").read()
+    json_text = re.findall("({.*?})", install_log)[0]
+    api_data = json.loads(json_text)
+    api_url = re.sub("https://.*?:", "https://127.0.0.1:", api_data.get("apiUrl"))
+
     client = OutlineVPN(
-        api_url=os.getenv("OUTLINE_API_URL"),
-        cert_sha256=os.getenv("OUTLINE_CERT_SHA256")
+        api_url=api_url,
+        cert_sha256=api_data.get("certSha256")
     )  # pylint: disable=W0621
     yield client
 
