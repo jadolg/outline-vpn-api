@@ -2,7 +2,8 @@
 Integration tests for the API wrapper
 """
 
-import os
+import json
+import re
 
 import pytest
 
