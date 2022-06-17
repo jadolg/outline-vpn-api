@@ -19,8 +19,6 @@ jobs:
       shell: bash
       run: |
         bash -c "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-server/master/src/server_manager/install_scripts/install_server.sh)" > ./outline-install.log
-        OUTLINE_CREDENTIALS=$(grep "apiUrl" ./outline-install.log | sed -e 's/{\"apiUrl\":\"//g;s/\",\"certSha256\":\".*//g;s/https:\/\/.*:/https:\/\/127.0.0.1:/g;s/\x1b\[1\;32m//g')
-        echo "OUTLINE_CREDENTIALS=$OUTLINE_CREDENTIALS" >> $GITHUB_ENV
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
