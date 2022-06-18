@@ -5,3 +5,4 @@ venv/
 /dist/
 /.pytest_cache/
 /outline-install.log
+__pycache__
