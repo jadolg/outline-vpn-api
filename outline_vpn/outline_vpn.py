@@ -67,12 +67,12 @@ class OutlineVPN:
             return result
         raise Exception("Unable to retrieve keys")
 
-    def create_key(self) -> OutlineKey:
+    def create_key(self, key_name=None) -> OutlineKey:
         """Create a new key"""
         response = requests.post(f"{self.api_url}/access-keys/", verify=False)
         if response.status_code == 201:
             key = response.json()
-            return OutlineKey(
+            outline_key = OutlineKey(
                 key_id=key.get("id"),
                 name=key.get("name"),
                 password=key.get("password"),
@@ -81,6 +81,9 @@ class OutlineVPN:
                 access_url=key.get("accessUrl"),
                 used_bytes=0,
             )
+            if key_name and self.rename_key(outline_key.key_id, key_name):
+                outline_key.name = key_name
+            return outline_key
 
         raise Exception("Unable to create key")
 

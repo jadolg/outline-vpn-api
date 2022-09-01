@@ -36,6 +36,9 @@ def test_cud_key(client: OutlineVPN):  # pylint: disable=W0621
     assert new_key is not None
     assert int(new_key.key_id) > 0
 
+    named_key = client.create_key(key_name="Test Key")
+    assert named_key.name == "Test Key"
+
     assert client.rename_key(new_key.key_id, "a_name")
 
     assert client.delete_key(new_key.key_id)
