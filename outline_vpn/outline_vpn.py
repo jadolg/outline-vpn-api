@@ -81,9 +81,8 @@ class OutlineVPN:
                 access_url=key.get("accessUrl"),
                 used_bytes=0,
             )
-            if key_name:
-                if self.rename_key(outline_key.key_id, key_name):
-                    outline_key.name = key_name
+            if key_name and self.rename_key(outline_key.key_id, key_name):
+                outline_key.name = key_name
             return outline_key
 
         raise Exception("Unable to create key")
