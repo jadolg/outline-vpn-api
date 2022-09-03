@@ -24,6 +24,10 @@ class OutlineKey:
     used_bytes: int
 
 
+class OutlineServerErrorException(Exception):
+    pass
+
+
 class OutlineVPN:
     """
     An Outline VPN connection
@@ -46,7 +50,7 @@ class OutlineVPN:
                 response_metrics.status_code >= 400
                 or "bytesTransferredByUserId" not in response_metrics.json()
             ):
-                raise Exception("Unable to get metrics")
+                raise OutlineServerErrorException("Unable to get metrics")
 
             response_json = response.json()
             result = []
@@ -65,7 +69,7 @@ class OutlineVPN:
                     )
                 )
             return result
-        raise Exception("Unable to retrieve keys")
+        raise OutlineServerErrorException("Unable to retrieve keys")
 
     def create_key(self, key_name=None) -> OutlineKey:
         """Create a new key"""
@@ -85,7 +89,7 @@ class OutlineVPN:
                 outline_key.name = key_name
             return outline_key
 
-        raise Exception("Unable to create key")
+        raise OutlineServerErrorException("Unable to create key")
 
     def delete_key(self, key_id: int) -> bool:
         """Delete a key"""
@@ -133,7 +137,7 @@ class OutlineVPN:
             response.status_code >= 400
             or "bytesTransferredByUserId" not in response.json()
         ):
-            raise Exception("Unable to get metrics")
+            raise OutlineServerErrorException("Unable to get metrics")
         return response.json()
 
     def get_server_information(self):
@@ -151,7 +155,7 @@ class OutlineVPN:
         """
         response = requests.get(f"{self.api_url}/server", verify=False)
         if response.status_code != 200:
-            raise Exception("Unable to get information about the server")
+            raise OutlineServerErrorException("Unable to get information about the server")
         return response.json()
 
     def set_server_name(self, name: str) -> bool:
@@ -184,10 +188,10 @@ class OutlineVPN:
         data = {"port": port}
         response = requests.put(f"{self.api_url}/server/port-for-new-access-keys", verify=False, json=data)
         if response.status_code == 400:
-            raise Exception(
+            raise OutlineServerErrorException(
                 "The requested port wasn't an integer from 1 through 65535, or the request had no port parameter.")
         elif response.status_code == 409:
-            raise Exception("The requested port was already in use by another service.")
+            raise OutlineServerErrorException("The requested port was already in use by another service.")
         return response.status_code == 204
 
     def set_data_limit_for_all_keys(self, limit_bytes: int) -> bool:
