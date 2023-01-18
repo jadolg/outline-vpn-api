@@ -1,7 +1,7 @@
 """
 API wrapper for Outline VPN
 """
-
+import typing
 from dataclasses import dataclass
 
 import requests
@@ -22,6 +22,7 @@ class OutlineKey:
     method: str
     access_url: str
     used_bytes: int
+    data_limit: typing.Optional[int]
 
 
 class OutlineServerErrorException(Exception):
@@ -63,6 +64,7 @@ class OutlineVPN:
                         port=key.get("port"),
                         method=key.get("method"),
                         access_url=key.get("accessUrl"),
+                        data_limit=key.get("dataLimit", {}).get("bytes"),
                         used_bytes=response_metrics.json()
                         .get("bytesTransferredByUserId")
                         .get(key.get("id")),
@@ -84,6 +86,7 @@ class OutlineVPN:
                 method=key.get("method"),
                 access_url=key.get("accessUrl"),
                 used_bytes=0,
+                data_limit=None,
             )
             if key_name and self.rename_key(outline_key.key_id, key_name):
                 outline_key.name = key_name
