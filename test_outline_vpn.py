@@ -45,9 +45,18 @@ def test_cud_key(client: OutlineVPN):  # pylint: disable=W0621
 
 
 def test_limits(client: OutlineVPN):  # pylint: disable=W0621
-    """Test setting and removing limits"""
-    assert client.add_data_limit(0, 1024 * 1024 * 20)
-    assert client.delete_data_limit(0)
+    """Test setting, retrieving and removing custom limits"""
+    new_limit = 1024 * 1024 * 20
+    target_key_id = 0
+
+    assert client.add_data_limit(target_key_id, new_limit)
+
+    keys = client.get_keys()
+    for key in keys:
+        if key.key_id == target_key_id:
+            assert key.data_limit == new_limit
+
+    assert client.delete_data_limit(target_key_id)
 
 
 def test_server_methods(client: OutlineVPN):
