@@ -6,6 +6,7 @@ import json
 import re
 
 import pytest
+import requests
 
 from outline_vpn.outline_vpn import OutlineVPN
 
@@ -19,8 +20,7 @@ def client() -> OutlineVPN:
     api_url = re.sub("https://.*?:", "https://127.0.0.1:", api_data.get("apiUrl"))
 
     client = OutlineVPN(
-        api_url=api_url,
-        cert_sha256=api_data.get("certSha256")
+        api_url=api_url, cert_sha256=api_data.get("certSha256")
     )  # pylint: disable=W0621
     yield client
 
@@ -88,8 +88,8 @@ def test_metrics_status(client: OutlineVPN):
 def test_data_limit_for_all_keys(client: OutlineVPN):
     assert client.set_data_limit_for_all_keys(1024 * 1024 * 20)
     assert client.delete_data_limit_for_all_keys()
-    
-    
+
+
 def test_get_transferred_data(client: OutlineVPN):
     """Call the method and assert it responds something"""
     data = client.get_transferred_data()
