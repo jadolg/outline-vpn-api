@@ -6,7 +6,6 @@ import json
 import re
 
 import pytest
-import requests
 
 from outline_vpn.outline_vpn import OutlineVPN
 
@@ -15,14 +14,14 @@ from outline_vpn.outline_vpn import OutlineVPN
 def client() -> OutlineVPN:
     """This generates a client from the credentials provided in the environment"""
     install_log = open("outline-install.log", "r").read()
-    json_text = re.findall("({.*?})", install_log)[0]
+    json_text = re.findall("({[^}]+})", install_log)[0]
     api_data = json.loads(json_text)
-    api_url = re.sub("https://.*?:", "https://127.0.0.1:", api_data.get("apiUrl"))
+    api_url = re.sub("https://[^:]+:", "https://127.0.0.1:", api_data.get("apiUrl"))
 
     client = OutlineVPN(
-        api_url=api_url, cert_sha256=api_data.get("certSha256")
-    )  # pylint: disable=W0621
-    yield client
+        api_url=api_url, cert_sha256=api_data.get("certSha256"))
+
+    return client
 
 
 def test_get_keys(client: OutlineVPN):  # pylint: disable=W0621
