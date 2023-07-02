@@ -27,7 +27,7 @@ client.rename_key(new_key.key_id, "new_key")
 client.delete_key(new_key.key_id)
 
 # Set a monthly data limit for a key (20MB)
-client.add_data_limit(new_key.key_id, 1024 * 1024 * 20)
+client.add_data_limit(new_key.key_id, 1000 * 1000 * 20)
 
 # Remove the data limit
 client.delete_data_limit(new_key.key_id)
