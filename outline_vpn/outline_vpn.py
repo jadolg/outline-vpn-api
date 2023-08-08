@@ -1,11 +1,13 @@
 """
 API wrapper for Outline VPN
 """
+import asyncio
 import typing
 from dataclasses import dataclass
 
-import requests
-from urllib3 import PoolManager
+import aiohttp
+
+from utils import get_aiohttp_fingerprint
 
 
 @dataclass
@@ -28,108 +30,107 @@ class OutlineServerErrorException(Exception):
     pass
 
 
-class _FingerprintAdapter(requests.adapters.HTTPAdapter):
-    """
-    This adapter injected into the requests session will check that the
-    fingerprint for the certificate matches for every request
-    """
-    def __init__(self, fingerprint=None, **kwargs):
-        self.fingerprint = str(fingerprint)
-        super(_FingerprintAdapter, self).__init__(**kwargs)
-
-    def init_poolmanager(self, connections, maxsize, block=False):
-        self.poolmanager = PoolManager(
-            num_pools=connections,
-            maxsize=maxsize,
-            block=block,
-            assert_fingerprint=self.fingerprint,
-        )
-
-
 class OutlineVPN:
     """
     An Outline VPN connection
     """
 
-    def __init__(self, api_url: str, cert_sha256: str = None):
+    def __init__(self, api_url: str):
         self.api_url = api_url
+        self.session: aiohttp.ClientSession | None = None
 
+    async def init(self, cert_sha256: str = None):
         if cert_sha256:
-            session = requests.Session()
-            session.mount("https://", _FingerprintAdapter(cert_sha256))
+            connector = aiohttp.TCPConnector(
+                ssl=get_aiohttp_fingerprint(ssl_assert_fingerprint=cert_sha256)
+            )
+            session = aiohttp.ClientSession(connector=connector)
             self.session = session
         else:
-            self.session = requests.Session()
+            self.session = aiohttp.ClientSession()
 
-    def get_keys(self):
-        """Get all keys in the outline server"""
-        response = self.session.get(f"{self.api_url}/access-keys/", verify=False)
-        if response.status_code == 200 and "accessKeys" in response.json():
-            response_metrics = self.session.get(
-                f"{self.api_url}/metrics/transfer", verify=False
-            )
+    async def _get_metrics(self) -> dict:
+        async with self.session.get(
+            url=f"{self.api_url}/metrics/transfer"
+        ) as resp:
+            resp_json = await resp.json()
             if (
-                response_metrics.status_code >= 400
-                or "bytesTransferredByUserId" not in response_metrics.json()
+                resp.status >= 400
+                or "bytesTransferredByUserId" not in resp_json
             ):
                 raise OutlineServerErrorException("Unable to get metrics")
+            return resp_json
 
-            response_json = response.json()
-            result = []
-            for key in response_json.get("accessKeys"):
-                result.append(
-                    OutlineKey(
-                        key_id=key.get("id"),
-                        name=key.get("name"),
-                        password=key.get("password"),
-                        port=key.get("port"),
-                        method=key.get("method"),
-                        access_url=key.get("accessUrl"),
-                        data_limit=key.get("dataLimit", {}).get("bytes"),
-                        used_bytes=response_metrics.json()
-                        .get("bytesTransferredByUserId")
-                        .get(key.get("id")),
-                    )
+    async def get_keys(self):
+        """Get all keys in the outline server"""
+        async with self.session.get(
+            url=f"{self.api_url}/access-keys/",
+        ) as resp:
+            resp_json = await resp.json()
+            if resp.status != 200 or "accessKeys" not in resp_json:
+                raise OutlineServerErrorException("Unable to retrieve keys")
+
+        response_metrics = await self._get_metrics()
+
+        result = []
+        for key in resp_json.get("accessKeys"):
+            result.append(
+                OutlineKey(
+                    key_id=key.get("id"),
+                    name=key.get("name"),
+                    password=key.get("password"),
+                    port=key.get("port"),
+                    method=key.get("method"),
+                    access_url=key.get("accessUrl"),
+                    data_limit=key.get("dataLimit", {}).get("bytes"),
+                    used_bytes=response_metrics
+                    .get("bytesTransferredByUserId")
+                    .get(key.get("id")),
                 )
-            return result
-        raise OutlineServerErrorException("Unable to retrieve keys")
-
-    def create_key(self, key_name=None) -> OutlineKey:
-        """Create a new key"""
-        response = self.session.post(f"{self.api_url}/access-keys/", verify=False)
-        if response.status_code == 201:
-            key = response.json()
-            outline_key = OutlineKey(
-                key_id=key.get("id"),
-                name=key.get("name"),
-                password=key.get("password"),
-                port=key.get("port"),
-                method=key.get("method"),
-                access_url=key.get("accessUrl"),
-                used_bytes=0,
-                data_limit=None,
             )
-            if key_name and self.rename_key(outline_key.key_id, key_name):
-                outline_key.name = key_name
-            return outline_key
+        return result
 
-        raise OutlineServerErrorException("Unable to create key")
+    async def create_key(self, key_name: str = None) -> OutlineKey:
+        """Create a new key"""
+        async with self.session.post(
+            url=f"{self.api_url}/access-keys/"
+        ) as resp:
 
-    def delete_key(self, key_id: int) -> bool:
-        """Delete a key"""
-        response = self.session.delete(f"{self.api_url}/access-keys/{key_id}", verify=False)
-        return response.status_code == 204
+            if resp.status != 201:
+                raise OutlineServerErrorException("Unable to create key")
 
-    def rename_key(self, key_id: int, name: str):
-        """Rename a key"""
-        files = {
-            "name": (None, name),
-        }
+            key = await resp.json()
 
-        response = self.session.put(
-            f"{self.api_url}/access-keys/{key_id}/name", files=files, verify=False
+        outline_key = OutlineKey(
+            key_id=key.get("id"),
+            name=key.get("name"),
+            password=key.get("password"),
+            port=key.get("port"),
+            method=key.get("method"),
+            access_url=key.get("accessUrl"),
+            used_bytes=0,
+            data_limit=None,
         )
-        return response.status_code == 204
+        if key_name is not None:
+            is_renamed = await self.rename_key(outline_key.key_id, key_name)
+            if is_renamed:
+                outline_key.name = key_name
+        return outline_key
+
+    async def delete_key(self, key_id: int) -> bool:
+        """Delete a key"""
+        async with self.session.delete(
+            url=f"{self.api_url}/access-keys/{key_id}"
+        ) as resp:
+            return resp.status == 204
+
+    async def rename_key(self, key_id: int, name: str) -> bool:
+        """Rename a key"""
+        async with self.session.put(
+            url=f"{self.api_url}/access-keys/{key_id}/name",
+            data={"name": name}
+        ) as resp:
+            return resp.status == 204
 
     def add_data_limit(self, key_id: int, limit_bytes: int) -> bool:
         """Set data limit for a key (in bytes)"""
@@ -243,3 +244,7 @@ class OutlineVPN:
             f"{self.api_url}/server/access-key-data-limit", verify=False
         )
         return response.status_code == 204
+
+    def __del__(self):
+        if self.session is not None:
+            asyncio.create_task(self.session.close())
