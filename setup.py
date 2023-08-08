@@ -1,11 +1,11 @@
 # -*-coding:utf-8-*-
-"""setup for outline-vpn-api"""
+"""setup for outline-vpn-api-async"""
 
 from setuptools import setup
 
 setup(
-    name="outline-vpn-api",
-    version="3.0.0",
+    name="outline-vpn-api-async",
+    version="0.0.1",
     packages=["outline_vpn"],
     url="https://github.com/jadolg/outline-vpn-api/",
     license="MIT",
@@ -14,5 +14,5 @@ setup(
     description="Python API wrapper for Outline VPN",
     long_description=open("README.md", "r").read(),  # pylint: disable=R1732
     long_description_content_type="text/markdown",
-    install_requires=("requests",),
+    install_requires=("aiohttp",),
 )
