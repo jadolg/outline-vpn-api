@@ -5,9 +5,9 @@ import asyncio
 
 import aiohttp
 
-from exceptions import OutlineServerErrorException
-from structs import OutlineKey
-from utils import get_aiohttp_fingerprint
+from .exceptions import OutlineServerErrorException
+from .structs import OutlineKey
+from .utils import get_aiohttp_fingerprint
 
 
 class OutlineVPN:
