@@ -34,7 +34,37 @@ class OutlineVPN:
             resp_json = await resp.json()
             if resp.status >= 400 or "bytesTransferredByUserId" not in resp_json:
                 raise OutlineServerErrorException("Unable to get metrics")
+
             return resp_json
+
+    async def get_key(self, key_id: int) -> OutlineKey:
+        keys = await self.get_keys()
+        for key in keys:
+            if key.key_id == key_id:
+                return key
+
+        raise OutlineServerErrorException(f"Unable to retrieve key with id {key_id}")
+
+        # TODO: implement normally then ready on outline side
+        # https://github.com/Jigsaw-Code/outline-server/issues/1280
+        # async with self.session.get(
+        #     url=f"{self.api_url}/access-keys/{key_id}"
+        # ) as resp:
+        #     resp_json = await resp.json()
+        #     if resp.status != 200:
+        #         print(resp_json)
+        #         raise OutlineServerErrorException(f"Unable to retrieve key with id {key_id}")
+        #
+        #     return OutlineKey(
+        #         key_id=resp_json.get("id"),
+        #         name=resp_json.get("name"),
+        #         password=resp_json.get("password"),
+        #         port=resp_json.get("port"),
+        #         method=resp_json.get("method"),
+        #         access_url=resp_json.get("accessUrl"),
+        #         data_limit=resp_json.get("dataLimit", {}).get("bytes"),
+        #         used_bytes=0,  # TODO: add metrics
+        #     )
 
     async def get_keys(self):
         """Get all keys in the outline server"""
@@ -49,20 +79,10 @@ class OutlineVPN:
 
         result = []
         for key in resp_json.get("accessKeys"):
-            result.append(
-                OutlineKey(
-                    key_id=key.get("id"),
-                    name=key.get("name"),
-                    password=key.get("password"),
-                    port=key.get("port"),
-                    method=key.get("method"),
-                    access_url=key.get("accessUrl"),
-                    data_limit=key.get("dataLimit", {}).get("bytes"),
-                    used_bytes=response_metrics.get("bytesTransferredByUserId").get(
-                        key.get("id")
-                    ),
-                )
+            key["used_bytes"] = response_metrics.get("bytesTransferredByUserId").get(
+                key.get("id")
             )
+            result.append(OutlineKey.from_key_json(key))
         return result
 
     async def create_key(self, key_name: str = None) -> OutlineKey:
@@ -70,19 +90,12 @@ class OutlineVPN:
         async with self.session.post(url=f"{self.api_url}/access-keys/") as resp:
             if resp.status != 201:
                 raise OutlineServerErrorException("Unable to create key")
-
             key = await resp.json()
 
-        outline_key = OutlineKey(
-            key_id=key.get("id"),
-            name=key.get("name"),
-            password=key.get("password"),
-            port=key.get("port"),
-            method=key.get("method"),
-            access_url=key.get("accessUrl"),
-            used_bytes=0,
-            data_limit=None,
-        )
+            key["used_bytes"] = 0
+            key["data_limit"] = None
+
+        outline_key = OutlineKey.from_key_json(key)
         if key_name is not None:
             is_renamed = await self.rename_key(outline_key.key_id, key_name)
             if is_renamed:
