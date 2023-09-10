@@ -14,7 +14,7 @@ class OutlineKey:
     Describes a key in the Outline server
     """
 
-    key_id: int
+    key_id: str
     name: str
     password: str
     port: int
@@ -33,6 +33,7 @@ class _FingerprintAdapter(requests.adapters.HTTPAdapter):
     This adapter injected into the requests session will check that the
     fingerprint for the certificate matches for every request
     """
+
     def __init__(self, fingerprint=None, **kwargs):
         self.fingerprint = str(fingerprint)
         super(_FingerprintAdapter, self).__init__(**kwargs)
@@ -69,8 +70,8 @@ class OutlineVPN:
                 f"{self.api_url}/metrics/transfer", verify=False
             )
             if (
-                response_metrics.status_code >= 400
-                or "bytesTransferredByUserId" not in response_metrics.json()
+                    response_metrics.status_code >= 400
+                    or "bytesTransferredByUserId" not in response_metrics.json()
             ):
                 raise OutlineServerErrorException("Unable to get metrics")
 
@@ -115,12 +116,12 @@ class OutlineVPN:
 
         raise OutlineServerErrorException("Unable to create key")
 
-    def delete_key(self, key_id: int) -> bool:
+    def delete_key(self, key_id: str) -> bool:
         """Delete a key"""
         response = self.session.delete(f"{self.api_url}/access-keys/{key_id}", verify=False)
         return response.status_code == 204
 
-    def rename_key(self, key_id: int, name: str):
+    def rename_key(self, key_id: str, name: str):
         """Rename a key"""
         files = {
             "name": (None, name),
@@ -131,7 +132,7 @@ class OutlineVPN:
         )
         return response.status_code == 204
 
-    def add_data_limit(self, key_id: int, limit_bytes: int) -> bool:
+    def add_data_limit(self, key_id: str, limit_bytes: int) -> bool:
         """Set data limit for a key (in bytes)"""
         data = {"limit": {"bytes": limit_bytes}}
 
@@ -140,7 +141,7 @@ class OutlineVPN:
         )
         return response.status_code == 204
 
-    def delete_data_limit(self, key_id: int) -> bool:
+    def delete_data_limit(self, key_id: str) -> bool:
         """Removes data limit for a key"""
         response = self.session.delete(
             f"{self.api_url}/access-keys/{key_id}/data-limit", verify=False
@@ -158,8 +159,8 @@ class OutlineVPN:
         }"""
         response = self.session.get(f"{self.api_url}/metrics/transfer", verify=False)
         if (
-            response.status_code >= 400
-            or "bytesTransferredByUserId" not in response.json()
+                response.status_code >= 400
+                or "bytesTransferredByUserId" not in response.json()
         ):
             raise OutlineServerErrorException("Unable to get metrics")
         return response.json()
