@@ -133,9 +133,31 @@ class OutlineVPN:
         else:
             raise OutlineServerErrorException("Unable to get key")
 
-    def create_key(self, key_name=None) -> OutlineKey:
+    def create_key(
+            self,
+            name: str = None,
+            method: str = None,
+            password: str = None,
+            port: int = None,
+            data_limit: int = None,
+    ) -> OutlineKey:
         """Create a new key"""
-        response = self.session.post(f"{self.api_url}/access-keys/", verify=False)
+
+        payload = {}
+        if name:
+            payload["name"] = name
+        if method:
+            payload["method"] = method
+        if password:
+            payload["password"] = password
+        if port:
+            payload["port"] = port
+        if data_limit:
+            payload["limit"] = {"bytes": data_limit}
+
+        response = self.session.post(
+            f"{self.api_url}/access-keys", verify=False, json=payload
+        )
         if response.status_code == 201:
             key = response.json()
             outline_key = OutlineKey(
@@ -146,13 +168,11 @@ class OutlineVPN:
                 method=key.get("method"),
                 access_url=key.get("accessUrl"),
                 used_bytes=0,
-                data_limit=None,
+                data_limit=key.get("dataLimit", {}).get("bytes")
             )
-            if key_name and self.rename_key(outline_key.key_id, key_name):
-                outline_key.name = key_name
             return outline_key
 
-        raise OutlineServerErrorException("Unable to create key")
+        raise OutlineServerErrorException(f"Unable to create key. {response.text}")
 
     def delete_key(self, key_id: str) -> bool:
         """Delete a key"""

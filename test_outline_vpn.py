@@ -18,8 +18,7 @@ def client() -> OutlineVPN:
     api_data = json.loads(json_text)
     api_url = re.sub("https://[^:]+:", "https://127.0.0.1:", api_data.get("apiUrl"))
 
-    client = OutlineVPN(
-        api_url=api_url, cert_sha256=api_data.get("certSha256"))
+    client = OutlineVPN(api_url=api_url, cert_sha256=api_data.get("certSha256"))
 
     return client
 
@@ -45,12 +44,29 @@ def test_crud_key(client: OutlineVPN):  # pylint: disable=W0621
     assert read_key is not None
     assert read_key.key_id == new_key.key_id
 
-    named_key = client.create_key(key_name="Test Key")
+    named_key = client.create_key(name="Test Key")
     assert named_key.name == "Test Key"
 
     assert client.rename_key(new_key.key_id, "a_name")
 
     assert client.delete_key(new_key.key_id)
+
+
+def test_create_key_with_attributes(client: OutlineVPN):
+    """Test creating a key with attributes"""
+    key = client.create_key(
+        name="Another test key",
+        port=9090,
+        data_limit=1024 * 1024 * 20,
+        method="aes-192-gcm",
+        password="test",
+    )
+    assert key.name == "Another test key"
+    assert key.port == 9090
+    assert key.method == "aes-192-gcm"
+    assert key.password == "test"
+    assert key.data_limit == 1024 * 1024 * 20
+    assert client.delete_key(key.key_id)
 
 
 def test_limits(client: OutlineVPN):  # pylint: disable=W0621
