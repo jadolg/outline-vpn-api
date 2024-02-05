@@ -28,6 +28,10 @@ class OutlineServerErrorException(Exception):
     pass
 
 
+class OutlineLibraryException(Exception):
+    pass
+
+
 class _FingerprintAdapter(requests.adapters.HTTPAdapter):
     """
     This adapter injected into the requests session will check that the
@@ -52,7 +56,7 @@ class OutlineVPN:
     An Outline VPN connection
     """
 
-    def __init__(self, api_url: str, cert_sha256: str = None):
+    def __init__(self, api_url: str, cert_sha256: str):
         self.api_url = api_url
 
         if cert_sha256:
@@ -60,7 +64,9 @@ class OutlineVPN:
             session.mount("https://", _FingerprintAdapter(cert_sha256))
             self.session = session
         else:
-            self.session = requests.Session()
+            raise OutlineLibraryException(
+                "No certificate SHA256 provided. Running without certificate is no longer supported."
+            )
 
     def get_keys(self):
         """Get all keys in the outline server"""
@@ -96,7 +102,9 @@ class OutlineVPN:
         raise OutlineServerErrorException("Unable to retrieve keys")
 
     def get_key(self, key_id: str) -> OutlineKey:
-        response = self.session.get(f"{self.api_url}/access-keys/{key_id}", verify=False)
+        response = self.session.get(
+            f"{self.api_url}/access-keys/{key_id}", verify=False
+        )
         if response.status_code == 200:
             key = response.json()
 
@@ -148,7 +156,9 @@ class OutlineVPN:
 
     def delete_key(self, key_id: str) -> bool:
         """Delete a key"""
-        response = self.session.delete(f"{self.api_url}/access-keys/{key_id}", verify=False)
+        response = self.session.delete(
+            f"{self.api_url}/access-keys/{key_id}", verify=False
+        )
         return response.status_code == 204
 
     def rename_key(self, key_id: str, name: str):
