@@ -7,6 +7,8 @@ from dataclasses import dataclass
 import requests
 from urllib3 import PoolManager
 
+UNABLE_TO_GET_METRICS_ERROR = "Unable to get metrics"
+
 
 @dataclass
 class OutlineKey:
@@ -76,10 +78,10 @@ class OutlineVPN:
                 f"{self.api_url}/metrics/transfer", verify=False
             )
             if (
-                    response_metrics.status_code >= 400
-                    or "bytesTransferredByUserId" not in response_metrics.json()
+                response_metrics.status_code >= 400
+                or "bytesTransferredByUserId" not in response_metrics.json()
             ):
-                raise OutlineServerErrorException("Unable to get metrics")
+                raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
 
             response_json = response.json()
             result = []
@@ -112,10 +114,10 @@ class OutlineVPN:
                 f"{self.api_url}/metrics/transfer", verify=False
             )
             if (
-                    response_metrics.status_code >= 400
-                    or "bytesTransferredByUserId" not in response_metrics.json()
+                response_metrics.status_code >= 400
+                or "bytesTransferredByUserId" not in response_metrics.json()
             ):
-                raise OutlineServerErrorException("Unable to get metrics")
+                raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
 
             outline_key = OutlineKey(
                 key_id=key.get("id"),
@@ -134,11 +136,12 @@ class OutlineVPN:
             raise OutlineServerErrorException("Unable to get key")
 
     def create_key(
-            self,
-            name: str = None,
-            method: str = None,
-            password: str = None,
-            data_limit: int = None,
+        self,
+        key_id: str = None,
+        name: str = None,
+        method: str = None,
+        password: str = None,
+        data_limit: int = None,
     ) -> OutlineKey:
         """Create a new key"""
 
@@ -152,9 +155,16 @@ class OutlineVPN:
         if data_limit:
             payload["limit"] = {"bytes": data_limit}
 
-        response = self.session.post(
-            f"{self.api_url}/access-keys", verify=False, json=payload
-        )
+        if key_id:
+            payload["id"] = key_id
+            response = self.session.put(
+                f"{self.api_url}/access-keys/{key_id}", verify=False, json=payload
+            )
+        else:
+            response = self.session.post(
+                f"{self.api_url}/access-keys", verify=False, json=payload
+            )
+
         if response.status_code == 201:
             key = response.json()
             outline_key = OutlineKey(
@@ -165,7 +175,7 @@ class OutlineVPN:
                 method=key.get("method"),
                 access_url=key.get("accessUrl"),
                 used_bytes=0,
-                data_limit=key.get("dataLimit", {}).get("bytes")
+                data_limit=key.get("dataLimit", {}).get("bytes"),
             )
             return outline_key
 
@@ -216,10 +226,10 @@ class OutlineVPN:
         }"""
         response = self.session.get(f"{self.api_url}/metrics/transfer", verify=False)
         if (
-                response.status_code >= 400
-                or "bytesTransferredByUserId" not in response.json()
+            response.status_code >= 400
+            or "bytesTransferredByUserId" not in response.json()
         ):
-            raise OutlineServerErrorException("Unable to get metrics")
+            raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
         return response.json()
 
     def get_server_information(self):
