@@ -67,6 +67,23 @@ def test_create_key_with_attributes(client: OutlineVPN):
     assert client.delete_key(key.key_id)
 
 
+def test_create_key_with_attributes_and_id(client: OutlineVPN):
+    """Test creating a key with attributes and id"""
+    key = client.create_key(
+        key_id="test-id",
+        name="Yet another test key",
+        data_limit=1024 * 1024 * 20,
+        method="aes-192-gcm",
+        password="test",
+    )
+    assert key.key_id == "test-id"
+    assert key.name == "Yet another test key"
+    assert key.method == "aes-192-gcm"
+    assert key.password == "test"
+    assert key.data_limit == 1024 * 1024 * 20
+    assert client.delete_key(key.key_id)
+
+
 def test_limits(client: OutlineVPN):  # pylint: disable=W0621
     """Test setting, retrieving and removing custom limits"""
     new_limit = 1024 * 1024 * 20
