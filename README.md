@@ -33,3 +33,7 @@ client.add_data_limit(new_key.key_id, 1000 * 1000 * 20)
 client.delete_data_limit(new_key.key_id)
 
 ```
+
+## API documentation
+
+<https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/Jigsaw-Code/outline-server/master/src/shadowbox/server/api.yml>
