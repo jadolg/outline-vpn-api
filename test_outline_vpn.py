@@ -29,11 +29,15 @@ def test_get_keys(client: OutlineVPN):  # pylint: disable=W0621
     assert len(client.get_keys()) >= 1
 
 
-def test_cud_key(client: OutlineVPN):  # pylint: disable=W0621
+def test_crud_key(client: OutlineVPN):  # pylint: disable=W0621
     """Test creating/updating the name/deleting a key"""
     new_key = client.create_key()
     assert new_key is not None
     assert int(new_key.key_id) > 0
+
+    read_key = client.get_key(new_key.key_id)
+    assert read_key is not None
+    assert read_key.key_id == new_key.key_id
 
     named_key = client.create_key(key_name="Test Key")
     assert named_key.name == "Test Key"
