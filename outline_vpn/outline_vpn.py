@@ -7,8 +7,6 @@ from dataclasses import dataclass
 import requests
 from urllib3 import PoolManager
 
-UNABLE_TO_GET_METRICS_ERROR = "Unable to get metrics"
-
 
 @dataclass
 class OutlineKey:
@@ -27,10 +25,6 @@ class OutlineKey:
 
 
 class OutlineServerErrorException(Exception):
-    pass
-
-
-class OutlineLibraryException(Exception):
     pass
 
 
@@ -58,7 +52,7 @@ class OutlineVPN:
     An Outline VPN connection
     """
 
-    def __init__(self, api_url: str, cert_sha256: str):
+    def __init__(self, api_url: str, cert_sha256: str = None):
         self.api_url = api_url
 
         if cert_sha256:
@@ -66,9 +60,7 @@ class OutlineVPN:
             session.mount("https://", _FingerprintAdapter(cert_sha256))
             self.session = session
         else:
-            raise OutlineLibraryException(
-                "No certificate SHA256 provided. Running without certificate is no longer supported."
-            )
+            self.session = requests.Session()
 
     def get_keys(self):
         """Get all keys in the outline server"""
@@ -78,10 +70,10 @@ class OutlineVPN:
                 f"{self.api_url}/metrics/transfer", verify=False
             )
             if (
-                response_metrics.status_code >= 400
-                or "bytesTransferredByUserId" not in response_metrics.json()
+                    response_metrics.status_code >= 400
+                    or "bytesTransferredByUserId" not in response_metrics.json()
             ):
-                raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
+                raise OutlineServerErrorException("Unable to get metrics")
 
             response_json = response.json()
             result = []
@@ -103,68 +95,9 @@ class OutlineVPN:
             return result
         raise OutlineServerErrorException("Unable to retrieve keys")
 
-    def get_key(self, key_id: str) -> OutlineKey:
-        response = self.session.get(
-            f"{self.api_url}/access-keys/{key_id}", verify=False
-        )
-        if response.status_code == 200:
-            key = response.json()
-
-            response_metrics = self.session.get(
-                f"{self.api_url}/metrics/transfer", verify=False
-            )
-            if (
-                response_metrics.status_code >= 400
-                or "bytesTransferredByUserId" not in response_metrics.json()
-            ):
-                raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
-
-            outline_key = OutlineKey(
-                key_id=key.get("id"),
-                name=key.get("name"),
-                password=key.get("password"),
-                port=key.get("port"),
-                method=key.get("method"),
-                access_url=key.get("accessUrl"),
-                data_limit=key.get("dataLimit", {}).get("bytes"),
-                used_bytes=response_metrics.json()
-                .get("bytesTransferredByUserId")
-                .get(key.get("id")),
-            )
-            return outline_key
-        else:
-            raise OutlineServerErrorException("Unable to get key")
-
-    def create_key(
-        self,
-        key_id: str = None,
-        name: str = None,
-        method: str = None,
-        password: str = None,
-        data_limit: int = None,
-    ) -> OutlineKey:
+    def create_key(self, key_name=None) -> OutlineKey:
         """Create a new key"""
-
-        payload = {}
-        if name:
-            payload["name"] = name
-        if method:
-            payload["method"] = method
-        if password:
-            payload["password"] = password
-        if data_limit:
-            payload["limit"] = {"bytes": data_limit}
-
-        if key_id:
-            payload["id"] = key_id
-            response = self.session.put(
-                f"{self.api_url}/access-keys/{key_id}", verify=False, json=payload
-            )
-        else:
-            response = self.session.post(
-                f"{self.api_url}/access-keys", verify=False, json=payload
-            )
-
+        response = self.session.post(f"{self.api_url}/access-keys/", verify=False)
         if response.status_code == 201:
             key = response.json()
             outline_key = OutlineKey(
@@ -175,17 +108,17 @@ class OutlineVPN:
                 method=key.get("method"),
                 access_url=key.get("accessUrl"),
                 used_bytes=0,
-                data_limit=key.get("dataLimit", {}).get("bytes"),
+                data_limit=None,
             )
+            if key_name and self.rename_key(outline_key.key_id, key_name):
+                outline_key.name = key_name
             return outline_key
 
-        raise OutlineServerErrorException(f"Unable to create key. {response.text}")
+        raise OutlineServerErrorException("Unable to create key")
 
     def delete_key(self, key_id: str) -> bool:
         """Delete a key"""
-        response = self.session.delete(
-            f"{self.api_url}/access-keys/{key_id}", verify=False
-        )
+        response = self.session.delete(f"{self.api_url}/access-keys/{key_id}", verify=False)
         return response.status_code == 204
 
     def rename_key(self, key_id: str, name: str):
@@ -226,10 +159,10 @@ class OutlineVPN:
         }"""
         response = self.session.get(f"{self.api_url}/metrics/transfer", verify=False)
         if (
-            response.status_code >= 400
-            or "bytesTransferredByUserId" not in response.json()
+                response.status_code >= 400
+                or "bytesTransferredByUserId" not in response.json()
         ):
-            raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
+            raise OutlineServerErrorException("Unable to get metrics")
         return response.json()
 
     def get_server_information(self):
@@ -311,3 +244,65 @@ class OutlineVPN:
             f"{self.api_url}/server/access-key-data-limit", verify=False
         )
         return response.status_code == 204
+    
+    def get_all_key_usages(self):
+        """
+        Get usage for all available keys.
+        """
+        try:
+            keys = self.get_keys()
+            usage_data = self.get_transferred_data()
+            key_usage_list = []
+
+            for key in keys:
+                key_id = key.key_id
+                used_bytes = usage_data.get("bytesTransferredByUserId", {}).get(key_id, 0)
+                key_usage_list.append({
+                    "key_id": key_id,
+                    "name": key.name,
+                    "used_bytes": used_bytes
+                })
+
+            return key_usage_list
+        except Exception as e:
+            raise OutlineServerErrorException(f"Failed to get all key usages: {str(e)}")
+
+    def get_key_usage(self, key_name: str):
+        """
+        Get usage for a given key by name.
+        """
+        try:
+            keys = self.get_keys()
+            usage_data = self.get_transferred_data()
+
+            for key in keys:
+                if key.name == key_name:
+                    key_id = key.key_id
+                    used_bytes = usage_data.get("bytesTransferredByUserId", {}).get(key_id, 0)
+                    return {
+                        "key_id": key.key_id,
+                        "name": key.name,
+                        "used_bytes": used_bytes
+                    }
+            raise OutlineServerErrorException(f"Key with name {key_name} not found")
+        except Exception as e:
+            raise OutlineServerErrorException(f"Failed to get key usage for '{key_name}': {str(e)}")
+
+    def get_key_info_by_name(self, name: str):
+        """
+        Get key information by key name.
+        """
+        try:
+            keys = self.get_keys()
+            for key in keys:
+                if key.name == name:
+                    return {
+                        "id": key.key_id,
+                        "name": name,
+                        "url": key.access_url,
+                        "used": key.used_bytes,
+                        "data_limit": key.data_limit
+                    }
+            raise OutlineServerErrorException(f"Key with name {name} not found")
+        except Exception as e:
+            raise OutlineServerErrorException(f"Failed to get key info by name '{name}': {str(e)}")
