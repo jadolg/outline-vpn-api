@@ -78,8 +78,8 @@ class OutlineVPN:
                 f"{self.api_url}/metrics/transfer", verify=False
             )
             if (
-                    response_metrics.status_code >= 400
-                    or "bytesTransferredByUserId" not in response_metrics.json()
+                response_metrics.status_code >= 400
+                or "bytesTransferredByUserId" not in response_metrics.json()
             ):
                 raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
 
@@ -114,8 +114,8 @@ class OutlineVPN:
                 f"{self.api_url}/metrics/transfer", verify=False
             )
             if (
-                    response_metrics.status_code >= 400
-                    or "bytesTransferredByUserId" not in response_metrics.json()
+                response_metrics.status_code >= 400
+                or "bytesTransferredByUserId" not in response_metrics.json()
             ):
                 raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
 
@@ -136,12 +136,12 @@ class OutlineVPN:
             raise OutlineServerErrorException("Unable to get key")
 
     def create_key(
-            self,
-            key_id: str = None,
-            name: str = None,
-            method: str = None,
-            password: str = None,
-            data_limit: int = None,
+        self,
+        key_id: str = None,
+        name: str = None,
+        method: str = None,
+        password: str = None,
+        data_limit: int = None,
     ) -> OutlineKey:
         """Create a new key"""
 
@@ -175,7 +175,7 @@ class OutlineVPN:
                 method=key.get("method"),
                 access_url=key.get("accessUrl"),
                 used_bytes=0,
-                data_limit=key.get("dataLimit", {}).get("bytes")
+                data_limit=key.get("dataLimit", {}).get("bytes"),
             )
             return outline_key
 
@@ -226,8 +226,8 @@ class OutlineVPN:
         }"""
         response = self.session.get(f"{self.api_url}/metrics/transfer", verify=False)
         if (
-                response.status_code >= 400
-                or "bytesTransferredByUserId" not in response.json()
+            response.status_code >= 400
+            or "bytesTransferredByUserId" not in response.json()
         ):
             raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
         return response.json()
