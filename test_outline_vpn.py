@@ -7,7 +7,7 @@ import re
 
 import pytest
 
-from outline_vpn.outline_vpn import OutlineVPN
+from outline_vpn.outline_vpn import OutlineVPN, OutlineLibraryException
 
 
 @pytest.fixture
@@ -22,6 +22,12 @@ def client() -> OutlineVPN:
         api_url=api_url, cert_sha256=api_data.get("certSha256"))
 
     return client
+
+
+def test_no_cert_sha256_raises_exception():
+    """Test that the client raises an exception if the cert sha256 is not provided"""
+    with pytest.raises(OutlineLibraryException):
+        OutlineVPN(api_url="https://aaa", cert_sha256="")
 
 
 def test_get_keys(client: OutlineVPN):  # pylint: disable=W0621
