@@ -3,6 +3,7 @@ Integration tests for the API wrapper
 """
 
 import json
+import random
 import re
 
 import pytest
@@ -69,14 +70,15 @@ def test_create_key_with_attributes(client: OutlineVPN):
 
 def test_create_key_with_attributes_and_id(client: OutlineVPN):
     """Test creating a key with attributes and id"""
+    key_id = f"test-id-{random.random()}"
     key = client.create_key(
-        key_id="test-id",
+        key_id=key_id,
         name="Yet another test key",
         data_limit=1024 * 1024 * 20,
         method="aes-192-gcm",
         password="test",
     )
-    assert key.key_id == "test-id"
+    assert key.key_id == key_id
     assert key.name == "Yet another test key"
     assert key.method == "aes-192-gcm"
     assert key.password == "test"
