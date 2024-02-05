@@ -95,6 +95,36 @@ class OutlineVPN:
             return result
         raise OutlineServerErrorException("Unable to retrieve keys")
 
+    def get_key(self, key_id: str) -> OutlineKey:
+        response = self.session.get(f"{self.api_url}/access-keys/{key_id}", verify=False)
+        if response.status_code == 200:
+            key = response.json()
+
+            response_metrics = self.session.get(
+                f"{self.api_url}/metrics/transfer", verify=False
+            )
+            if (
+                    response_metrics.status_code >= 400
+                    or "bytesTransferredByUserId" not in response_metrics.json()
+            ):
+                raise OutlineServerErrorException("Unable to get metrics")
+
+            outline_key = OutlineKey(
+                key_id=key.get("id"),
+                name=key.get("name"),
+                password=key.get("password"),
+                port=key.get("port"),
+                method=key.get("method"),
+                access_url=key.get("accessUrl"),
+                data_limit=key.get("dataLimit", {}).get("bytes"),
+                used_bytes=response_metrics.json()
+                .get("bytesTransferredByUserId")
+                .get(key.get("id")),
+            )
+            return outline_key
+        else:
+            raise OutlineServerErrorException("Unable to get key")
+
     def create_key(self, key_name=None) -> OutlineKey:
         """Create a new key"""
         response = self.session.post(f"{self.api_url}/access-keys/", verify=False)
