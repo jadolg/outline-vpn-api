@@ -25,6 +25,20 @@ class OutlineKey:
     used_bytes: int
     data_limit: typing.Optional[int]
 
+    def __init__(self, response: dict, metrics: dict = None):
+        self.key_id = response.get("id")
+        self.name = response.get("name")
+        self.password = response.get("password")
+        self.port = response.get("port")
+        self.method = response.get("method")
+        self.access_url = response.get("accessUrl")
+        self.used_bytes = (
+            metrics.get("bytesTransferredByUserId").get(response.get("id"))
+            if metrics
+            else 0
+        )
+        self.data_limit = response.get("dataLimit", {}).get("bytes")
+
 
 class OutlineServerErrorException(Exception):
     pass
@@ -86,20 +100,7 @@ class OutlineVPN:
             response_json = response.json()
             result = []
             for key in response_json.get("accessKeys"):
-                result.append(
-                    OutlineKey(
-                        key_id=key.get("id"),
-                        name=key.get("name"),
-                        password=key.get("password"),
-                        port=key.get("port"),
-                        method=key.get("method"),
-                        access_url=key.get("accessUrl"),
-                        data_limit=key.get("dataLimit", {}).get("bytes"),
-                        used_bytes=response_metrics.json()
-                        .get("bytesTransferredByUserId")
-                        .get(key.get("id")),
-                    )
-                )
+                result.append(OutlineKey(key, response_metrics.json()))
             return result
         raise OutlineServerErrorException("Unable to retrieve keys")
 
@@ -119,19 +120,7 @@ class OutlineVPN:
             ):
                 raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
 
-            outline_key = OutlineKey(
-                key_id=key.get("id"),
-                name=key.get("name"),
-                password=key.get("password"),
-                port=key.get("port"),
-                method=key.get("method"),
-                access_url=key.get("accessUrl"),
-                data_limit=key.get("dataLimit", {}).get("bytes"),
-                used_bytes=response_metrics.json()
-                .get("bytesTransferredByUserId")
-                .get(key.get("id")),
-            )
-            return outline_key
+            return OutlineKey(key, response_metrics.json())
         else:
             raise OutlineServerErrorException("Unable to get key")
 
@@ -167,16 +156,7 @@ class OutlineVPN:
 
         if response.status_code == 201:
             key = response.json()
-            outline_key = OutlineKey(
-                key_id=key.get("id"),
-                name=key.get("name"),
-                password=key.get("password"),
-                port=key.get("port"),
-                method=key.get("method"),
-                access_url=key.get("accessUrl"),
-                used_bytes=0,
-                data_limit=key.get("dataLimit", {}).get("bytes"),
-            )
+            outline_key = OutlineKey(key)
             return outline_key
 
         raise OutlineServerErrorException(f"Unable to create key. {response.text}")
