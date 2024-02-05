@@ -56,13 +56,11 @@ def test_create_key_with_attributes(client: OutlineVPN):
     """Test creating a key with attributes"""
     key = client.create_key(
         name="Another test key",
-        port=9090,
         data_limit=1024 * 1024 * 20,
         method="aes-192-gcm",
         password="test",
     )
     assert key.name == "Another test key"
-    assert key.port == 9090
     assert key.method == "aes-192-gcm"
     assert key.password == "test"
     assert key.data_limit == 1024 * 1024 * 20

@@ -138,7 +138,6 @@ class OutlineVPN:
             name: str = None,
             method: str = None,
             password: str = None,
-            port: int = None,
             data_limit: int = None,
     ) -> OutlineKey:
         """Create a new key"""
@@ -150,8 +149,6 @@ class OutlineVPN:
             payload["method"] = method
         if password:
             payload["password"] = password
-        if port:
-            payload["port"] = port
         if data_limit:
             payload["limit"] = {"bytes": data_limit}
 
