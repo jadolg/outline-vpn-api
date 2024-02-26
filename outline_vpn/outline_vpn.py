@@ -1,6 +1,7 @@
 """
 API wrapper for Outline VPN
 """
+
 import typing
 from dataclasses import dataclass
 
@@ -131,6 +132,7 @@ class OutlineVPN:
         method: str = None,
         password: str = None,
         data_limit: int = None,
+        port: int = None,
     ) -> OutlineKey:
         """Create a new key"""
 
@@ -143,7 +145,8 @@ class OutlineVPN:
             payload["password"] = password
         if data_limit:
             payload["limit"] = {"bytes": data_limit}
-
+        if port:
+            payload["port"] = port
         if key_id:
             payload["id"] = key_id
             response = self.session.put(
