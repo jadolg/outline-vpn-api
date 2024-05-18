@@ -20,6 +20,16 @@ for key in client.get_keys():
 # Create a new key
 new_key = client.create_key()
 
+# Or create a key with a specific attributes
+key = client.create_key(
+    key_id="new_key_001",
+    name="Yet another test key",
+    data_limit=1024 * 1024 * 20,
+    method="aes-192-gcm",
+    password="test",
+    port=2323,
+)
+
 # Rename it
 client.rename_key(new_key.key_id, "new_key")
 
