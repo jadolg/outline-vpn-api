@@ -6,3 +6,5 @@ venv/
 /.pytest_cache/
 /outline-install.log
 __pycache__
+.coverage
+coverage.xml
