@@ -2,7 +2,7 @@
 
 A Python API wrapper for [Outline VPN](https://getoutline.org/)
 
-[![Test](https://github.com/jadolg/outline-vpn-api/actions/workflows/test.yml/badge.svg)](https://github.com/jadolg/outline-vpn-api/actions/workflows/test.yml) ![](https://img.shields.io/pypi/dm/outline-vpn-api.svg)
+[![Test](https://github.com/jadolg/outline-vpn-api/actions/workflows/test.yml/badge.svg)](https://github.com/jadolg/outline-vpn-api/actions/workflows/test.yml) ![](https://img.shields.io/pypi/dm/outline-vpn-api.svg) [![codecov](https://codecov.io/github/jadolg/outline-vpn-api/branch/main/graph/badge.svg?token=SLYnaHOxz2)](https://codecov.io/github/jadolg/outline-vpn-api)
 
 ## How to use
 
