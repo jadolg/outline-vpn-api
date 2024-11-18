@@ -29,7 +29,7 @@ jobs:
       run: |
         pytest -x --cov-report xml --cov=./
     - name: Upload code coverage
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         verbose: true
         files: coverage.xml
