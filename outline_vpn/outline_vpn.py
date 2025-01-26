@@ -2,51 +2,11 @@
 API wrapper for Outline VPN
 """
 
-import typing
-from dataclasses import dataclass
-
 import requests
 from urllib3 import PoolManager
-
-UNABLE_TO_GET_METRICS_ERROR = "Unable to get metrics"
-
-
-@dataclass
-class OutlineKey:
-    """
-    Describes a key in the Outline server
-    """
-
-    key_id: str
-    name: str
-    password: str
-    port: int
-    method: str
-    access_url: str
-    used_bytes: int
-    data_limit: typing.Optional[int]
-
-    def __init__(self, response: dict, metrics: dict = None):
-        self.key_id = response.get("id")
-        self.name = response.get("name")
-        self.password = response.get("password")
-        self.port = response.get("port")
-        self.method = response.get("method")
-        self.access_url = response.get("accessUrl")
-        self.used_bytes = (
-            metrics.get("bytesTransferredByUserId").get(response.get("id"))
-            if metrics
-            else 0
-        )
-        self.data_limit = response.get("dataLimit", {}).get("bytes")
-
-
-class OutlineServerErrorException(Exception):
-    pass
-
-
-class OutlineLibraryException(Exception):
-    pass
+from outline_vpn.exceptions import OutlineLibraryException, OutlineServerErrorException
+from outline_vpn.models import OutlineKey, UNABLE_TO_GET_METRICS_ERROR
+from outline_vpn.utils import create_payload
 
 
 class _FingerprintAdapter(requests.adapters.HTTPAdapter):
@@ -85,7 +45,7 @@ class OutlineVPN:
                 "No certificate SHA256 provided. Running without certificate is no longer supported."
             )
 
-    def get_keys(self, timeout: int = None):
+    def get_keys(self, timeout: int = None) -> list[OutlineKey]:
         """Get all keys in the outline server"""
         response = self.session.get(
             f"{self.api_url}/access-keys/", verify=False, timeout=timeout
@@ -139,17 +99,9 @@ class OutlineVPN:
     ) -> OutlineKey:
         """Create a new key"""
 
-        payload = {}
-        if name:
-            payload["name"] = name
-        if method:
-            payload["method"] = method
-        if password:
-            payload["password"] = password
-        if data_limit:
-            payload["limit"] = {"bytes": data_limit}
-        if port:
-            payload["port"] = port
+        payload: dict = create_payload()
+
+        # you can't work with id or update it: {'code': 'InvalidArgument', 'message': 'Parameter `id` is not allowed'
         if key_id:
             payload["id"] = key_id
             response = self.session.put(
