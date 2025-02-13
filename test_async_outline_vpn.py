@@ -12,7 +12,7 @@ async def client():
     api_data = json.loads(json_text)
     api_url = re.sub("https://[^:]+:", "https://127.0.0.1:", api_data.get("apiUrl"))
 
-    client = AsyncOutlineVPN(api_url=api_url, cert_sha256=api_data.get("certSha256"))
+    client = AsyncOutlineVPN(api_url=api_url + '/', cert_sha256=api_data.get("certSha256"))
     return client
 
 

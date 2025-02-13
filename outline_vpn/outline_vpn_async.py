@@ -225,17 +225,16 @@ class AsyncOutlineVPN:
                 json={"port": port},
                 timeout=timeout,
         ) as response:
-            match response.status:
-                case 400:
-                    raise OutlineServerErrorException(
-                        "The requested port wasn't an integer from 1 through 65535, or the request had no port parameter."
-                    )
-                case 409:
-                    raise OutlineServerErrorException(
-                        "The requested port was already in use by another service."
-                    )
-                case _:
-                    return response.status == 204
+            if response.status == 400:
+                raise OutlineServerErrorException(
+                    "The requested port wasn't an integer from 1 through 65535, or the request had no port parameter."
+                )
+            elif response.status == 409:
+                raise OutlineServerErrorException(
+                    "The requested port was already in use by another service."
+                )
+            else:
+                return response.status == 204
 
     async def set_data_limit_for_all_keys(
             self, limit_bytes: int, timeout: int = None
