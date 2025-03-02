@@ -99,7 +99,13 @@ class OutlineVPN:
     ) -> OutlineKey:
         """Create a new key"""
 
-        payload: dict = create_payload()
+        payload: dict = create_payload(
+            name=name,
+            method=method,
+            password=password,
+            data_limit=data_limit,
+            port=port,
+        )
 
         # you can't work with id or update it: {'code': 'InvalidArgument', 'message': 'Parameter `id` is not allowed'
         if key_id:
