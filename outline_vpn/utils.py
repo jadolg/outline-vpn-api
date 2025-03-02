@@ -1,9 +1,12 @@
+from typing import Union
+
+
 def create_payload(
-        name: str | None = None,
-        method: str | None = None,
-        password: str | None = None,
-        data_limit: int | None = None,
-        port: int | None = None,
+        name: Union[str, None],
+        method: Union[str, None],
+        password: Union[str, None],
+        data_limit: Union[str, None],
+        port: Union[str, None],
 ):
     payload: dict = {}
     if name:

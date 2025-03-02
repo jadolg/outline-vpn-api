@@ -62,8 +62,8 @@ async def test_limits(client: AsyncOutlineVPN):  # pylint: disable=W0621
 @pytest.mark.asyncio
 async def test_data_limit_for_all_keys(client: AsyncOutlineVPN):
     try:
-        assert client.set_data_limit_for_all_keys(1024 * 1024 * 20)
-        assert client.delete_data_limit_for_all_keys()
+        assert await client.set_data_limit_for_all_keys(1024 * 1024 * 20)
+        assert await client.delete_data_limit_for_all_keys()
     finally:
         await client.close()
 
