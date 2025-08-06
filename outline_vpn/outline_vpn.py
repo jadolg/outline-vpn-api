@@ -85,7 +85,7 @@ class OutlineVPN:
                 "No certificate SHA256 provided. Running without certificate is no longer supported."
             )
 
-    def get_keys(self, timeout: int = None):
+    def get_keys(self, timeout: int = None) -> list[OutlineKey]:
         """Get all keys in the outline server"""
         response = self.session.get(
             f"{self.api_url}/access-keys/", verify=False, timeout=timeout
@@ -101,7 +101,7 @@ class OutlineVPN:
                 raise OutlineServerErrorException(UNABLE_TO_GET_METRICS_ERROR)
 
             response_json = response.json()
-            result = []
+            result: list[OutlineKey] = []
             for key in response_json.get("accessKeys"):
                 result.append(OutlineKey(key, response_metrics.json()))
             return result
