@@ -334,3 +334,64 @@ class OutlineVPN:
             timeout=timeout,
         )
         return response.status_code == 204
+    def get_all_key_usages(self):
+        """
+        Get usage for all available keys.
+        """
+        try:
+            keys = self.get_keys()
+            usage_data = self.get_transferred_data()
+            key_usage_list = []
+
+            for key in keys:
+                key_id = key.key_id
+                used_bytes = usage_data.get("bytesTransferredByUserId", {}).get(key_id, 0)
+                key_usage_list.append({
+                    "key_id": key_id,
+                    "name": key.name,
+                    "used_bytes": used_bytes
+                })
+
+            return key_usage_list
+        except Exception as e:
+            raise OutlineServerErrorException(f"Failed to get all key usages: {str(e)}")
+
+    def get_key_usage(self, key_name: str):
+        """
+        Get usage for a given key by name.
+        """
+        try:
+            keys = self.get_keys()
+            usage_data = self.get_transferred_data()
+
+            for key in keys:
+                if key.name == key_name:
+                    key_id = key.key_id
+                    used_bytes = usage_data.get("bytesTransferredByUserId", {}).get(key_id, 0)
+                    return {
+                        "key_id": key.key_id,
+                        "name": key.name,
+                        "used_bytes": used_bytes
+                    }
+            raise OutlineServerErrorException(f"Key with name {key_name} not found")
+        except Exception as e:
+            raise OutlineServerErrorException(f"Failed to get key usage for '{key_name}': {str(e)}")
+
+    def get_key_info_by_name(self, name: str):
+        """
+        Get key information by key name.
+        """
+        try:
+            keys = self.get_keys()
+            for key in keys:
+                if key.name == name:
+                    return {
+                        "id": key.key_id,
+                        "name": name,
+                        "url": key.access_url,
+                        "used": key.used_bytes,
+                        "data_limit": key.data_limit
+                    }
+            raise OutlineServerErrorException(f"Key with name {name} not found")
+        except Exception as e:
+            raise OutlineServerErrorException(f"Failed to get key info by name '{name}': {str(e)}")
