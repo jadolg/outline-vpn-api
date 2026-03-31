@@ -9,11 +9,11 @@ build-backend = "setuptools.build_meta"
 name = "outline-vpn-api"
 dynamic = ["version"]
 description = "Python API wrapper for Outline VPN"
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 
 dependencies = [
-    "requests==2.32.5",
-    "packaging==25.0"
+    "requests==2.33.1",
+    "packaging==26.0"
 ]
 
 keywords = [
