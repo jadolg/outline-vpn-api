@@ -13,7 +13,6 @@ requires-python = ">= 3.10"
 
 dependencies = [
     "requests==2.33.1",
-    "packaging==26.0"
 ]
 
 keywords = [
@@ -53,5 +52,6 @@ version = "0.0.0"
 test = [
     "pytest (>=9.0.0)",
     "pytest-cov (>=7.0.0,<8.0.0)",
-    "flake8 (>=7.3.0,<8.0.0)"
+    "flake8 (>=7.3.0,<8.0.0)",
+    "black (>=25.0.0)"
 ]
