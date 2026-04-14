@@ -7,7 +7,7 @@ A Python API wrapper for [Outline VPN](https://getoutline.org/)
 ## How to use
 
 ```python
-from outline_vpn.outline_vpn import OutlineVPN
+from outline_vpn import OutlineVPN
 
 # Setup the access with the API URL (Use the one provided to you after the server setup)
 client = OutlineVPN(api_url="https://127.0.0.1:51083/xlUG4F5BBft4rSrIvDSWuw",

@@ -8,7 +8,8 @@ import re
 
 import pytest
 
-from outline_vpn.outline_vpn import OutlineVPN, OutlineLibraryException
+from outline_vpn import OutlineVPN, OutlineLibraryException, OutlineServerErrorException
+from secrets import compare_digest
 
 
 @pytest.fixture
@@ -64,7 +65,7 @@ def test_create_key_with_attributes(client: OutlineVPN):
     )
     assert key.name == "Another test key"
     assert key.method == "aes-192-gcm"
-    assert key.password == "test"
+    assert compare_digest(key.password, "test")
     assert key.data_limit == 1024 * 1024 * 20
     assert key.port == 4545
     assert client.delete_key(key.key_id)
@@ -84,7 +85,7 @@ def test_create_key_with_attributes_and_id(client: OutlineVPN):
     assert key.key_id == key_id
     assert key.name == "Yet another test key"
     assert key.method == "aes-192-gcm"
-    assert key.password == "test"
+    assert compare_digest(key.password, "test")
     assert key.data_limit == 1024 * 1024 * 20
     assert key.port == 2323
     assert client.delete_key(key.key_id)
@@ -144,3 +145,31 @@ def test_get_transferred_data(client: OutlineVPN):
     data = client.get_transferred_data()
     assert data is not None
     assert "bytesTransferredByUserId" in data
+
+
+def test_get_key_not_found(client: OutlineVPN):
+    with pytest.raises(OutlineServerErrorException):
+        client.get_key("this-key-does-not-exist")
+
+
+def test_delete_key_not_found(client: OutlineVPN):
+    assert client.delete_key("this-key-does-not-exist") is False
+
+
+def test_set_port_invalid(client: OutlineVPN):
+    with pytest.raises(OutlineServerErrorException):
+        client.set_port_new_for_access_keys(0)
+
+
+
+def test_key_used_bytes(client: OutlineVPN):
+    keys = client.get_keys()
+    assert all(isinstance(k.used_bytes, int) for k in keys)
+
+
+def test_key_data_limit_none_without_limit(client: OutlineVPN):
+    key = client.create_key()
+    try:
+        assert key.data_limit is None
+    finally:
+        client.delete_key(key.key_id)
